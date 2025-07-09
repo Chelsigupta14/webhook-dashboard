@@ -1,29 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>GitHub Events Dashboard</title>
+  <meta charset="UTF-8" />
+  <title>GitHub Events Chart</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
-      background-color: #1e293b;
+      background: #1e293b;
       color: white;
-      text-align: center;
+      font-family: Arial, sans-serif;
       padding: 2rem;
-      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
     }
     canvas {
       background: white;
-      border-radius: 12px;
+      border-radius: 10px;
       padding: 1rem;
-      margin-top: 20px;
+      margin-top: 2rem;
     }
   </style>
 </head>
 <body>
-  <h1>📊 GitHub Events Dashboard</h1>
-  <p>Auto-refreshing every 15 seconds...</p>
-  <canvas id="eventChart" width="600" height="300"></canvas>
+  <h1>📊 GitHub Event Graph</h1>
+  <p>Live update every 15 seconds</p>
+  <canvas id="eventChart" width="400" height="200"></canvas>
 
   <script>
     const ctx = document.getElementById('eventChart').getContext('2d');
@@ -31,22 +31,29 @@
 
     async function fetchAndRenderData() {
       try {
-        const res = await fetch("https://294d18ffde2c.ngrok-free.app/events");
-        const events = await res.json();
+        const response = await fetch("https://7cb295f170d8.ngrok-free.app/events", {
+  headers: {
+    "ngrok-skip-browser-warning": "true"
+  }
+});
 
-        console.log("Events:", events); // debug
+        const events = await response.json();
+        console.log("Fetched events:", events);
 
         const counts = { push: 0, pull_request: 0, merge: 0 };
-        events.forEach(e => {
-          if (counts[e.action] !== undefined) counts[e.action]++;
+
+        events.forEach(event => {
+          if (event.action in counts) {
+            counts[event.action]++;
+          }
         });
 
         const data = {
           labels: ['Push', 'Pull Request', 'Merge'],
           datasets: [{
-            label: 'Event Count',
+            label: 'GitHub Events',
             data: [counts.push, counts.pull_request, counts.merge],
-            backgroundColor: ['#3b82f6', '#22c55e', '#f59e0b']
+            backgroundColor: ['#60a5fa', '#34d399', '#fbbf24']
           }]
         };
 
@@ -56,7 +63,7 @@
         } else {
           chart = new Chart(ctx, {
             type: 'bar',
-            data,
+            data: data,
             options: {
               responsive: true,
               scales: {
@@ -76,8 +83,10 @@
             }
           });
         }
-      } catch (error) {
-        console.error("Fetch error:", error);
+
+      } catch (err) {
+        console.error("Chart error:", err);
+        alert("Could not load chart data. Check console or events API.");
       }
     }
 
