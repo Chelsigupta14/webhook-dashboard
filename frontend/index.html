@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GitHub Events Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background-color: #1e293b;
+      color: white;
+      text-align: center;
+      padding: 2rem;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    canvas {
+      background: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>📊 GitHub Events Dashboard</h1>
+  <p>Auto-refreshing every 15 seconds...</p>
+  <canvas id="eventChart" width="600" height="300"></canvas>
+
+  <script>
+    const ctx = document.getElementById('eventChart').getContext('2d');
+    let chart;
+
+    async function fetchAndRenderData() {
+      try {
+        const res = await fetch("https://294d18ffde2c.ngrok-free.app/events");
+        const events = await res.json();
+
+        console.log("Events:", events); // debug
+
+        const counts = { push: 0, pull_request: 0, merge: 0 };
+        events.forEach(e => {
+          if (counts[e.action] !== undefined) counts[e.action]++;
+        });
+
+        const data = {
+          labels: ['Push', 'Pull Request', 'Merge'],
+          datasets: [{
+            label: 'Event Count',
+            data: [counts.push, counts.pull_request, counts.merge],
+            backgroundColor: ['#3b82f6', '#22c55e', '#f59e0b']
+          }]
+        };
+
+        if (chart) {
+          chart.data = data;
+          chart.update();
+        } else {
+          chart = new Chart(ctx, {
+            type: 'bar',
+            data,
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: { color: '#000' }
+                },
+                x: {
+                  ticks: { color: '#000' }
+                }
+              },
+              plugins: {
+                legend: {
+                  labels: { color: '#000' }
+                }
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
+    }
+
+    fetchAndRenderData();
+    setInterval(fetchAndRenderData, 15000);
+  </script>
+</body>
+</html>
